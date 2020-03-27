@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import axiosWithAuth from "../utils/axiosWithAuth";
 
 const initialColor = {
@@ -8,10 +7,11 @@ const initialColor = {
 };
 
 const ColorList = ({ colors, updateColors }) => {
-  console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
-  const [colorAdd, setColorAdd] = useState(initialColor);
+  const [newColor, setNewColor] = useState(initialColor);
+
+  console.log(newColor);
 
   const editColor = color => {
     setEditing(true);
@@ -20,47 +20,42 @@ const ColorList = ({ colors, updateColors }) => {
 
   const saveEdit = e => {
     e.preventDefault();
-    // Make a put request to save your updated color
-    // think about where will you get the id from...
-    // where is is saved right now?
     axiosWithAuth()
-      .put(`/colors/${colorToEdit.id}`, colorToEdit)
-      .then(() => {
-        setEditing(false);
-      });
+      .put(`/api/colors/${colorToEdit.id}`, colorToEdit)
+      .then(res => {
+        console.log("Edit Response", res);
+        updateColors([
+          ...colors.filter(color => color.id !== colorToEdit.id),
+          colorToEdit
+        ]);
+      })
+      .catch(err => console.log("Edit Error", err));
   };
 
   const deleteColor = color => {
-    // make a delete request to delete this color
     axiosWithAuth()
-      .delete(`/colors/${color.id}`)
-      .then(res => console.log(res));
+      .delete(`/api/colors/${color.id}`)
+      .then(res => {
+        console.log("Delete Response", res);
+        updateColors([...colors.filter(col => col.id !== color.id)]);
+      })
+      .catch(err => console.log("Delete Error", err));
   };
 
-  const addColor = e => {
+  const addNewColor = e => {
     e.preventDefault();
     axiosWithAuth()
-      .post("/colors/", addColor)
+      .post("/api/colors", newColor)
       .then(res => {
-        updateColors([...colors, colorAdd]);
-      });
+        console.log("Add Response", res);
+        updateColors([...colors, newColor]);
+        setNewColor(initialColor);
+      })
+      .catch(err => console.log(err));
   };
 
   return (
     <div className="colors-wrap">
-      <label>
-        color:
-        <input
-          onChange={e => setColorAdd({ ...colorAdd, color: e.target.value })}
-          value={colorAdd.color}
-        />
-      </label>
-      <label>
-        hex:
-        <input onChange={e => setColorAdd({...colorAdd, hex: e.target.value})}
-        value={colorAdd.color.hex}/>
-        </label>
-        <button onClick={addColor}>add color</button>
       <p>colors</p>
       <ul>
         {colors.map(color => (
@@ -111,19 +106,39 @@ const ColorList = ({ colors, updateColors }) => {
           <div className="button-row">
             <button type="submit">save</button>
             <button onClick={() => setEditing(false)}>cancel</button>
-            <button onClick={() => deleteColor}>delete</button>
           </div>
         </form>
       )}
       <div className="spacer" />
-      {/* stretch - build another form here to add a color */}
-      <label>
-        hex:
-        <input
-          onChange={e => setColorAdd({ ...colorAdd, color: e.target.value })}
-          value={colorAdd.color}
-        />
-      </label>
+      <form>
+        <legend>add color</legend>
+        <label>
+          color name:
+          <input
+            name="color"
+            type="text"
+            onChange={e => setNewColor({ ...newColor, color: e.target.value })}
+            value={newColor.color}
+          />
+        </label>
+        <label>
+          hex code:
+          <input
+            name="hex"
+            type="text"
+            onChange={e =>
+              setNewColor({
+                ...newColor,
+                code: { hex: e.target.value }
+              })
+            }
+            value={newColor.code.hex}
+          />
+        </label>
+        <div className="button-row">
+          <button onClick={addNewColor}>save</button>
+        </div>
+      </form>
     </div>
   );
 };

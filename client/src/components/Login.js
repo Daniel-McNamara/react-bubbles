@@ -1,53 +1,64 @@
-import React, { useState }from "react";
-import { useForm } from "react-hook-form";
-import axiosWithAuth from "../utils/axiosWithAuth";
+import React, { useState } from "react";
+import axios from "axios";
 
-const Login = (props) => {
-  // make a post request to retrieve a token from the api
-  // when you have handled the token, navigate to the BubblePage route
-  
-const [data, setData] = useState({});
-const handleChange = e => {
-  setData({
-    ...data,
-    [e.target.name]: e.target.value
+const Login = props => {
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: ""
   });
-};
 
-const { register, handleSubmit, errors } = useForm();
-const onSubmit = data => {
-  axiosWithAuth()
-    .post("/login", data)
-    .then(res => {
-      localStorage.setItem("token", res.data.payload);
-      props.history.push("/bubblePage");
+  const handleChange = e => {
+    setCredentials({
+      ...credentials,
+      [e.target.name]: e.target.value
     });
-  }
+  };
+
+  const login = e => {
+    e.preventDefault();
+    axios
+      .post("http://localhost:5000/api/login", credentials)
+      .then(res => {
+        console.log("Login Response", res);
+        window.localStorage.setItem("token", res.data.payload);
+        props.history.push("/bubble-page");
+        setCredentials({ username: "", password: "" });
+      })
+      .catch(err => {
+        console.log("Login Error", err);
+      });
+  };
+  
   return (
     <div>
-      <h1>Welcome to the Bubble App!</h1>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <input
-          type="text"
-          placeholder="Username"
-          name="username"
-          value={data.username}
-          onChange={handleChange}
-          ref={register({ required: true, maxLength: 80 })}
-        />
-        <br />
-        <input
-          type="text"
-          placeholder="Password"
-          name="password"
-          value={data.password}
-          onChange={handleChange}
-          ref={register({ required: true })}
-        />
-        <br />
-        <button onClick={handleSubmit}>log in</button>
-
+      <form onSubmit={login}>
+        <label>
+          Username
+          <input
+            required
+            id="username"
+            name="username"
+            type="text"
+            value={credentials.username}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          Password
+          <input
+            required
+            id="password"
+            name="password"
+            type="text"
+            value={credentials.password}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </label>
+        <button type="submit" onClick={login}>
+          Submit
+        </button>
       </form>
     </div>
   );
